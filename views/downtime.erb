@@ -1,0 +1,11 @@
+<pre>
+<% @downtimes.each_pair do |host,types| %>
+Host: <%= host %>
+<% types[:host].each do |i| %>
+  Downtime ID: <%= i %>
+<% end %>
+<% types[:service].each do |i| %>
+  Downtime ID: <%= i %>
+<% end %>
+<% end %>
+</pre>

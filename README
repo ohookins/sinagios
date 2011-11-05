@@ -1,0 +1,9 @@
+Sinagios is a Sinatra app which provides an extremely basic RESTful API for
+manipulating Nagios service and host downtime.
+
+You can perform basically three operations:
+ - GET /downtime (lists hosts and all current downtime IDs)
+ - DELETE /downtime/:name (deletes all downtime for a host)
+ - XXXX (will be used to schedule downtime for a host and its services)
+
+A basic authkey authentication/authorisation system will be put in soon.
