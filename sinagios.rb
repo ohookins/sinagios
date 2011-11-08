@@ -30,3 +30,10 @@ delete '/v1/downtime/:name' do
     return "No downtime detected for #{params[:name]}"
   end
 end
+
+# Create downtime for the named machine. It's not really practical to make this
+# an idempotent action so this will always create new downtime. Hey, you can
+# always just delete all downtime for the host before making this call!
+post '/v1/downtime/:name' do
+  "Not yet implemented!"
+end
