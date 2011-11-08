@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'sinatra'
+require 'json'
 
 def downtimes (statusfile='/var/log/nagios/status.dat')
   f = File.open(statusfile)
@@ -26,7 +27,7 @@ def delete_downtimes(host, downtimes)
   cmd_file = '/var/spool/nagios/cmd/nagios.cmd'
 
   [[:host,:host],[:service,:svc]].each do |input_type,output_type|
-    
+
     downtimes[host][input_type].each do |id|
       command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
       File.open(cmd_file, 'w') do |c|
@@ -38,9 +39,13 @@ def delete_downtimes(host, downtimes)
 end
 
 get '/downtime' do
-  @downtimes = downtimes()
+  content_type 'application/json', :charset => 'utf-8'
+  downtimes().to_json
+end
 
-  erb :downtime
+get '/downtime/:name' do
+  content_type 'application/json', :charset => 'utf-8'
+  downtimes()[params[:name]].to_json
 end
 
 delete '/downtime/:name' do

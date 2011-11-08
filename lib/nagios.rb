@@ -25,6 +25,19 @@ class Nagios
     end
   end
 
+  def delete_all_downtime_for_host(host, downtimes)
+    [[:host,:host],[:service,:svc]].each do |input_type,output_type|
+
+      downtimes[host][input_type].each do |id|
+        command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
+        File.open(@cmd_file, 'w') do |c|
+          c.puts(command)
+        end
+      end
+    end
+    return "All downtime deleted for #{host}"
+  end
+
   private
 
   def parse_downtime(status_text)
@@ -68,18 +81,5 @@ class Nagios
       end
     end
     return downtime
-  end
-
-  def delete_downtimes(host, downtimes)
-    [[:host,:host],[:service,:svc]].each do |input_type,output_type|
-
-      downtimes[host][input_type].each do |id|
-        command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
-        File.open(@cmd_file, 'w') do |c|
-          c.puts(command)
-        end
-      end
-    end
-    return "All downtime deleted for #{host}"
   end
 end
