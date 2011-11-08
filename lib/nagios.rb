@@ -72,6 +72,11 @@ class Nagios
         state = :outsideblock
         host = nil
 
+      # .* {
+      # in other words, any other unrecognised block we don't care about
+      elsif line =~ /^(\w+) \{/ and state == :outsideblock
+        state = $~[1].to_sym
+
       ### Unexpected states
       elsif line =~ /\}/ and (state == :outsideblock or host == nil)
         # unexpected end of block
