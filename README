@@ -7,3 +7,6 @@ You can perform basically three operations:
  - XXXX (will be used to schedule downtime for a host and its services)
 
 A basic authkey authentication/authorisation system will be put in soon.
+
+This program and libraries are copyright 2011 Oliver Hookins, and licensed
+under the GNU General Public License Version 3.
