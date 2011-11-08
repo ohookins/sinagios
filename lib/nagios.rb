@@ -1,16 +1,24 @@
 class NonExistentCmdFile < Exception; end
 class NonWritableCmdFile < Exception; end
+class NonExistentStatusFile < Exception; end
+class NonWritableStatusFile < Exception; end
 
 class Nagios
-  # FIXME: Harvest the cmd_file location from actual Nagios config somehow
-  def initialize(cmd_file = '/var/spool/nagios/cmd/nagios.cmd')
+  # FIXME: Harvest the cmd_file/status_file location from actual Nagios config
+  # somehow
+  def initialize(cmd_file = '/var/spool/nagios/cmd/nagios.cmd',
+                 status_file = '/var/log/nagios/status.dat')
     @cmd_file = cmd_file
+    @status_file = status_file
+
     unless File.exist?(@cmd_file) then raise NonExistentCmdFile end
     unless File.writable?(@cmd_file) then raise NonWritableCmdFile end
+    unless File.exist?(@status_file) then raise NonExistentStatusFile end
+    unless File.writable?(@status_file) then raise NonWritableStatusFile end
   end
 
-  def downtimes (statusfile='/var/log/nagios/status.dat')
-    f = File.open(statusfile)
+  def downtimes
+    f = File.open(@status_file)
     state = :outsideblock
     host = nil
     downtimes = {}

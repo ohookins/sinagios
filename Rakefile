@@ -1,9 +1,8 @@
-require 'rake/testtask'
+require 'spec/rake/spectask'
 
-Rake::TestTask.new do |t|
-  t.libs << "tests"
-  t.test_files = FileList['tests/test*.rb']
-  t.verbose = true
+desc 'Run tests'
+Spec::Rake::SpecTask.new('test') do |t|
+  t.spec_files = FileList['tests/*_spec.rb']
 end
 
 task :default do
