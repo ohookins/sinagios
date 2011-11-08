@@ -72,13 +72,8 @@ class Nagios
         state = :outsideblock
         host = nil
 
-      # .* {
-      # in other words, any other unrecognised block we don't care about
-      elsif line =~ /^(\w+) \{/ and state == :outsideblock
-        state = $~[1].to_sym
-
       ### Unexpected states
-      elsif line =~ /\}/ and (state == :outsideblock or host == nil)
+      elsif line =~ /\}/ and state != :outsideblock and host == nil
         # unexpected end of block
         raise ParseError, "Unexpected end of block in status file line #{i+1}: #{line}"
       elsif line =~ /^(service|host)downtime \{/ and state != :outsideblock
