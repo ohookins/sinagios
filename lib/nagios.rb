@@ -2,6 +2,7 @@ class NonExistentCmdFile < Exception; end
 class NonWritableCmdFile < Exception; end
 class NonExistentStatusFile < Exception; end
 class NonWritableStatusFile < Exception; end
+class ParseError < Exception; end
 
 class Nagios
   # FIXME: Harvest the cmd_file/status_file location from actual Nagios config
@@ -17,25 +18,56 @@ class Nagios
     unless File.writable?(@status_file) then raise NonWritableStatusFile end
   end
 
-  def downtimes
-    f = File.open(@status_file)
+  # read the status file and return the parsed downtime
+  def read_all_downtime
+    File.open(@status_file, 'r') do |f|
+      parse_downtime(f.readlines())
+    end
+  end
+
+  private
+
+  def parse_downtime(status_text)
+    # Parse the status file with a vague state machine
     state = :outsideblock
     host = nil
-    downtimes = {}
-    f.readlines().each do |line|
+    downtime = {}
+
+    # Pass through the array by index so we can give some debug information
+    # when we find a bad line.
+    status_text.each_index do |i|
+      line = status_text[i]
+
+      ### Expected states
+      # servicedowntime {
+      # hostdowntime {
       if line =~ /^(service|host)downtime \{/ and state == :outsideblock
         state = $~[1].to_sym
+
+      # host_name=foobarbaz
       elsif line =~ /host_name=(.*)/ and [:host, :service].include?(state)
         host = $~[1]
-        downtimes[host] ||= {:host => [], :service => []}
+        downtime[host] ||= {:host => [], :service => []}
+
+      # downtime_id=1234
       elsif line =~ /downtime_id=(.*)/ and [:host, :service].include?(state)
-        downtimes[host][state] << $~[1]
+        downtime[host][state] << $~[1]
+
+      # }
       elsif line =~ /\}/ and [:host, :service].include?(state)
         state = :outsideblock
+        host = nil
+
+      ### Unexpected states
+      elsif line =~ /\}/ and state == :outsideblock or host == nil
+        # unexpected end of block
+        raise ParseError, "Unexpected end of block in status file line #{i+1}: #{line}"
+      elsif line =~ /^(service|host)downtime \{/ and state != :outsideblock
+        # unexpected beginning of block
+        raise ParseError, "Unexpected beginning of block in status file line #{i+1}: #{line}"
       end
     end
-    f.close
-    return downtimes
+    return downtime
   end
 
   def delete_downtimes(host, downtimes)
