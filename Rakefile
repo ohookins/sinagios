@@ -7,7 +7,7 @@ end
 
 desc 'Run tests'
 RSpec::Core::RakeTask.new('test') do |t|
-  t.pattern = 'tests/*_spec.rb'
+  t.pattern = 'spec/*_spec.rb'
 end
 
 desc 'Run the application from the console.'
