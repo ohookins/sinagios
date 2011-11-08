@@ -1,58 +1,31 @@
+# Add local lib directory to the search path for libraries
+$: << File.join(File.dirname(__FILE__), 'lib')
+
 require 'rubygems'
 require 'sinatra'
 require 'json'
+require 'nagios'
 
-def downtimes (statusfile='/var/log/nagios/status.dat')
-  f = File.open(statusfile)
-  state = :outsideblock
-  host = nil
-  downtimes = {}
-  f.readlines().each do |line|
-    if line =~ /^(service|host)downtime \{/ and state == :outsideblock
-      state = $~[1].to_sym
-    elsif line =~ /host_name=(.*)/ and [:host, :service].include?(state)
-      host = $~[1]
-      downtimes[host] ||= {:host => [], :service => []}
-    elsif line =~ /downtime_id=(.*)/ and [:host, :service].include?(state)
-      downtimes[host][state] << $~[1]
-    elsif line =~ /\}/ and [:host, :service].include?(state)
-      state = :outsideblock
-    end
-  end
-  f.close
-  return downtimes
-end
-
-def delete_downtimes(host, downtimes)
-  cmd_file = '/var/spool/nagios/cmd/nagios.cmd'
-
-  [[:host,:host],[:service,:svc]].each do |input_type,output_type|
-
-    downtimes[host][input_type].each do |id|
-      command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
-      File.open(cmd_file, 'w') do |c|
-        c.puts(command)
-      end
-    end
-  end
-  return "All downtime deleted for #{host}"
-end
-
-get '/downtime' do
+# List all the downtime scheduled for all hosts and services
+get '/v1/downtime' do
+  nagios = Nagios.new
   content_type 'application/json', :charset => 'utf-8'
-  downtimes().to_json
+  nagios.get_all_downtime.to_json
 end
 
-get '/downtime/:name' do
+# List all the downtime scheduled for one host and its services
+get '/v1/downtime/:name' do
+  nagios = Nagios.new
   content_type 'application/json', :charset => 'utf-8'
-  downtimes()[params[:name]].to_json
+  nagios.get_all_downtime[params[:name]].to_json
 end
 
-delete '/downtime/:name' do
-  @downtimes = downtimes()
+# Delete all downtime scheduled for one host and its services
+delete '/v1/downtime/:name' do
+  nagios = Nagios.new
 
-  if @downtimes.has_key?(params[:name])
-    delete_downtimes(params[:name], @downtimes)
+  if nagios.get_all_downtime.has_key?(params[:name])
+    nagios.delete_all_downtime_for_host(params[:name])
   else
     return "No downtime detected for #{params[:name]}"
   end

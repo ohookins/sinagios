@@ -19,16 +19,16 @@ class Nagios
   end
 
   # read the status file and return the parsed downtime
-  def read_all_downtime
+  def get_all_downtime
     File.open(@status_file, 'r') do |f|
       parse_downtime(f.readlines())
     end
   end
 
-  def delete_all_downtime_for_host(host, downtimes)
+  def delete_all_downtime_for_host(host)
     [[:host,:host],[:service,:svc]].each do |input_type,output_type|
 
-      downtimes[host][input_type].each do |id|
+      get_all_downtime[host][input_type].each do |id|
         command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
         File.open(@cmd_file, 'w') do |c|
           c.puts(command)
@@ -64,7 +64,8 @@ class Nagios
 
       # downtime_id=1234
       elsif line =~ /downtime_id=(.*)/ and [:host, :service].include?(state)
-        downtime[host][state] << $~[1]
+        downtime[host][state] << Integer($~[1])
+        # Cast relatively safely to an int. Non-ints will raise ArgumentError.
 
       # }
       elsif line =~ /\}/ and [:host, :service].include?(state)
@@ -72,7 +73,7 @@ class Nagios
         host = nil
 
       ### Unexpected states
-      elsif line =~ /\}/ and state == :outsideblock or host == nil
+      elsif line =~ /\}/ and (state == :outsideblock or host == nil)
         # unexpected end of block
         raise ParseError, "Unexpected end of block in status file line #{i+1}: #{line}"
       elsif line =~ /^(service|host)downtime \{/ and state != :outsideblock

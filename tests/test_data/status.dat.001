@@ -1,0 +1,14 @@
+hostdowntime {
+  host_name=example1
+  downtime_id=1
+}
+
+servicedowntime {
+  host_name=example1
+  downtime_id=2
+}
+
+hostdowntime {
+  host_name=example2
+  downtime_id=3
+}
