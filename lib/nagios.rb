@@ -2,7 +2,6 @@ class NonExistentCmdFile < Exception; end
 class NonWritableCmdFile < Exception; end
 class NonExistentStatusFile < Exception; end
 class NonWritableStatusFile < Exception; end
-class ParseError < Exception; end
 
 class Nagios
   # FIXME: Harvest the cmd_file/status_file location from actual Nagios config
@@ -72,13 +71,6 @@ class Nagios
         state = :outsideblock
         host = nil
 
-      ### Unexpected states
-      elsif line =~ /\}/ and state != :outsideblock and host == nil
-        # unexpected end of block
-        raise ParseError, "Unexpected end of block in status file line #{i+1}: #{line}"
-      elsif line =~ /^(service|host)downtime \{/ and state != :outsideblock
-        # unexpected beginning of block
-        raise ParseError, "Unexpected beginning of block in status file line #{i+1}: #{line}"
       end
     end
     return downtime
