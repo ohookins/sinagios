@@ -29,16 +29,27 @@ class Nagios
     [[:host,:host],[:service,:svc]].each do |input_type,output_type|
 
       get_all_downtime[host][input_type].each do |id|
-        command = "[#{Time.now.utc.to_i}] DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}"
-        File.open(@cmd_file, 'w') do |c|
-          c.puts(command)
-        end
+        send_command("DEL_#{output_type.to_s.upcase}_DOWNTIME;#{id}")
       end
     end
     return "All downtime deleted for #{host}"
   end
 
   private
+
+  def get_seconds_since_epoch
+    # I generally frown on code that purely supports testing (rather than
+    # function) but mocking Time#now is really asking for trouble.
+    Time.now.utc.to_i
+  end
+
+  def send_command(command)
+    # Send a command to the command file. Mostly a wrapper around simple I/O
+    # for the sake of testability and encapsulation.
+    File.open(@cmd_file, 'w') do |cmd_file|
+      cmd_file.puts("[#{get_seconds_since_epoch}] #{command}")
+    end
+  end
 
   def parse_downtime(status_text)
     # Parse the status file with a vague state machine

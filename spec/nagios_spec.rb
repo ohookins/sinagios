@@ -2,6 +2,7 @@ require 'rspec'
 require 'tempfile'
 require 'fileutils'
 require 'nagios'
+require 'mocha'
 
 describe Nagios do
   before(:each) do
@@ -53,6 +54,35 @@ describe Nagios do
       @status_file = File.join(File.dirname(__FILE__), 'test_data', 'status.dat.002')
       nagios = Nagios.new(@cmd_file, @status_file)
       expect { nagios.get_all_downtime }.to raise_error(ParseError)
+    end
+  end
+
+  describe '#delete_all_downtime_for_host' do
+    it 'sends the correct commands for deleting downtime' do
+      @status_file = File.join(File.dirname(__FILE__), 'test_data', 'status.dat.001')
+      nagios = Nagios.new(@cmd_file, @status_file)
+
+      # Set up mocks to catch the commands that will be sent
+      nagios.expects(:send_command).with('DEL_HOST_DOWNTIME;1')
+      nagios.expects(:send_command).with('DEL_SVC_DOWNTIME;2')
+
+      expect { nagios.delete_all_downtime_for_host('example1') }.to_not raise_error
+    end
+  end
+
+  describe '#send_command' do
+    it 'writes the given command to the command file' do
+      nagios = Nagios.new(@cmd_file, @status_file)
+
+      # Mock the call to get the current time so we have predictable output
+      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
+
+      fakecommand = 'NAGIOS_DO_SOMETHING;1'
+      expect { nagios.send(:send_command, fakecommand) }.to_not raise_error
+
+      # Verify the output written to the command file
+      command_output = File.open(@cmd_file, 'r').read()
+      command_output.should eql("[1234567890] NAGIOS_DO_SOMETHING;1\n")
     end
   end
 end
