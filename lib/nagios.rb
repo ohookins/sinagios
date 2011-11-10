@@ -2,6 +2,7 @@ class NonExistentCmdFile < Exception; end
 class NonWritableCmdFile < Exception; end
 class NonExistentStatusFile < Exception; end
 class NonWritableStatusFile < Exception; end
+class ParseError < Exception; end
 
 class Nagios
   # FIXME: Harvest the cmd_file/status_file location from actual Nagios config
@@ -63,8 +64,13 @@ class Nagios
 
       # downtime_id=1234
       elsif line =~ /downtime_id=(.*)/ and [:host, :service].include?(state)
-        downtime[host][state] << Integer($~[1])
+        # Make sure we have already seen a host
+        if ! (host and downtime.has_key?(host))
+          raise ParseError, "Found downtime_id without a valid host_name. Line #{i+1} of status file: #{line}"
+        end
+
         # Cast relatively safely to an int. Non-ints will raise ArgumentError.
+        downtime[host][state] << Integer($~[1])
 
       # }
       elsif line =~ /\}/ and [:host, :service].include?(state)

@@ -48,5 +48,11 @@ describe Nagios do
       expect { downtime = nagios.get_all_downtime }.to_not raise_error
       downtime.should eql({'example1' => {:host => [1], :service => [2]}, 'example2' => {:host => [3], :service => []}})
     end
+
+    it 'raises exceptions when a host id is not found in the downtime block' do
+      @status_file = File.join(File.dirname(__FILE__), 'test_data', 'status.dat.002')
+      nagios = Nagios.new(@cmd_file, @status_file)
+      expect { nagios.get_all_downtime }.to raise_error(ParseError)
+    end
   end
 end
