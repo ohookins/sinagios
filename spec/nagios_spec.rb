@@ -70,19 +70,27 @@ describe Nagios do
     end
   end
 
+  describe '#get_seconds_since_epoch' do
+    it 'returns some positive integer' do
+      nagios = Nagios.new(@cmd_file, @status_file)
+
+      nagios.send(:get_seconds_since_epoch).should > 1000000
+    end
+  end
+
   describe '#send_command' do
     it 'writes the given command to the command file' do
       nagios = Nagios.new(@cmd_file, @status_file)
+      mockcommand = 'NAGIOS_DO_SOMETHING;1'
+      mocktime = 1234567890
 
       # Mock the call to get the current time so we have predictable output
-      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
-
-      fakecommand = 'NAGIOS_DO_SOMETHING;1'
-      expect { nagios.send(:send_command, fakecommand) }.to_not raise_error
+      nagios.expects(:get_seconds_since_epoch).returns(mocktime)
+      expect { nagios.send(:send_command, mockcommand) }.to_not raise_error
 
       # Verify the output written to the command file
       command_output = File.open(@cmd_file, 'r').read()
-      command_output.should eql("[1234567890] NAGIOS_DO_SOMETHING;1\n")
+      command_output.should eql("[#{mocktime}] #{mockcommand}\n")
     end
   end
 end
