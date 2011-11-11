@@ -4,9 +4,9 @@ task :default do
 end
 
 # Allow the rakefile targets to be used without rspec/rcov being present
-def safe_require(gem, &block)
+def safe_require(file, &block)
   begin
-    require gem
+    require file
     yield block
   rescue LoadError
     # do nothing

@@ -21,7 +21,7 @@ get '/v1/downtime/:name' do
 
   # Make sure we have something to return, otherwise return 404
   if downtime
-    downtime
+    downtime.to_json
   else
     status 404
   end

@@ -55,6 +55,13 @@ describe Nagios do
       nagios = Nagios.new(@cmd_file, @status_file)
       expect { nagios.get_all_downtime }.to raise_error(ParseError)
     end
+
+    it 'operates correctly when there is no scheduled downtime' do
+      nagios = Nagios.new(@cmd_file, @status_file)
+      downtime = nil
+      expect { downtime = nagios.get_all_downtime }.to_not raise_error
+      downtime.should eql({})
+    end
   end
 
   describe '#delete_all_downtime_for_host' do
