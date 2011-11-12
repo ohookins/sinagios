@@ -35,6 +35,24 @@ class Nagios
     return "All downtime deleted for #{host}"
   end
 
+  # Schedule a fixed amount of host downtime starting now.
+  def schedule_host_downtime(host, duration, author, comment)
+    start_time = get_seconds_since_epoch()
+    end_time = Integer(duration) + start_time
+
+    # SCHEDULE_HOST_DOWNTIME;<host_name>;<start_time>;<end_time>;<fixed>;<trigger_id>;<duration>;<author>;<comment>
+    send_command("SCHEDULE_HOST_DOWNTIME;#{host};#{start_time};#{end_time};1;0;0;#{author};#{comment}")
+  end
+
+  # Schedule a fixed amount of service downtime for all services starting now.
+  def schedule_services_downtime(host, duration, author, comment)
+    start_time = get_seconds_since_epoch()
+    end_time = Integer(duration) + start_time
+
+    # SCHEDULE_HOST_SVC_DOWNTIME;<host_name>;<start_time>;<end_time>;<fixed>;<trigger_id>;<duration>;<author>;<comment>
+    send_command("SCHEDULE_HOST_SVC_DOWNTIME;#{host};#{start_time};#{end_time};1;0;0;#{author};#{comment}")
+  end
+
   private
 
   def get_seconds_since_epoch

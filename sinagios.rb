@@ -42,6 +42,36 @@ end
 # an idempotent action so this will always create new downtime. Hey, you can
 # always just delete all downtime for the host before making this call!
 post '/v1/downtime/:name' do
-  status 404
-  body "Not yet implemented!"
+  # Do some basic validation
+  # FIXME: Better feedback of problems.
+  begin
+    host = params[:name].gsub(/[^a-zA-Z0-9\-\.]/, '')
+    duration = Integer(params[:duration])
+    author = params[:author].gsub(/[^a-zA-Z0-9\-\.#\s]/, '')
+    comment = params[:comment].gsub(/[^a-zA-Z0-9\-\.#\s]/, '')
+
+    # Make sure we have input data from the POST operation
+    if [params[:duration], params[:author], params[:comment]].include?(nil)
+      raise Exception
+    end
+
+    # Also check that we have something useful after gsub
+    if [host, author].include?('')
+      raise Exception
+    end
+
+  rescue Exception
+    # nil.gsub raises NoMethodError but we catch a generic exception to handle
+    # nil values for duration as well
+    status 400
+    return "Require these fields: duration, author, comment\n"
+  end
+
+  # Schedule the downtime for the host and the services. They may not start at
+  # exactly the same time by doing it this way, but it's not a big deal
+  # usually.
+  nagios = Nagios.new
+  nagios.schedule_host_downtime(params[:name], params[:duration], params[:author], params[:comment])
+  nagios.schedule_services_downtime(params[:name], params[:duration], params[:author], params[:comment])
+  status 200
 end

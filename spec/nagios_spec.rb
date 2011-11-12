@@ -45,9 +45,7 @@ describe Nagios do
       @status_file = File.join(File.dirname(__FILE__), 'test_data', 'status.dat.001')
       nagios = Nagios.new(@cmd_file, @status_file)
 
-      downtime = nil
-      expect { downtime = nagios.get_all_downtime }.to_not raise_error
-      downtime.should eql({'example1' => {:host => [1], :service => [2]}, 'example2' => {:host => [3], :service => []}})
+      nagios.get_all_downtime.should eql({'example1' => {:host => [1], :service => [2]}, 'example2' => {:host => [3], :service => []}})
     end
 
     it 'raises exceptions when a host id is not found in the downtime block' do
@@ -58,9 +56,7 @@ describe Nagios do
 
     it 'operates correctly when there is no scheduled downtime' do
       nagios = Nagios.new(@cmd_file, @status_file)
-      downtime = nil
-      expect { downtime = nagios.get_all_downtime }.to_not raise_error
-      downtime.should eql({})
+      nagios.get_all_downtime.should eql({})
     end
   end
 
@@ -73,7 +69,31 @@ describe Nagios do
       nagios.expects(:send_command).with('DEL_HOST_DOWNTIME;1')
       nagios.expects(:send_command).with('DEL_SVC_DOWNTIME;2')
 
-      expect { nagios.delete_all_downtime_for_host('example1') }.to_not raise_error
+      nagios.delete_all_downtime_for_host('example1')
+    end
+  end
+
+  describe '#schedule_host_downtime' do
+    it 'sends the correct commands for scheduling host downtime' do
+      nagios = Nagios.new(@cmd_file, @status_file)
+
+      # Mock out time and send_command
+      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
+      nagios.expects(:send_command).with('SCHEDULE_HOST_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
+
+      nagios.schedule_host_downtime('localhost', '9', 'Test Dude', 'Test Downtime')
+    end
+  end
+
+  describe '#schedule_services_downtime' do
+    it 'sends the correct commands for scheduling all services downtime' do
+      nagios = Nagios.new(@cmd_file, @status_file)
+
+      # Mock out time and send_command
+      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
+      nagios.expects(:send_command).with('SCHEDULE_HOST_SVC_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
+
+      nagios.schedule_services_downtime('localhost', '9', 'Test Dude', 'Test Downtime')
     end
   end
 
@@ -93,7 +113,7 @@ describe Nagios do
 
       # Mock the call to get the current time so we have predictable output
       nagios.expects(:get_seconds_since_epoch).returns(mocktime)
-      expect { nagios.send(:send_command, mockcommand) }.to_not raise_error
+      nagios.send(:send_command, mockcommand)
 
       # Verify the output written to the command file
       command_output = File.open(@cmd_file, 'r').read()

@@ -20,11 +20,23 @@ same on similar, but not equal, major versions.
 Operations
 ----------
 
+All structured output is in JSON.
+
 You can perform basically three operations:
- - GET /v1/downtime (lists hosts and all current downtime IDs)
- - DELETE /v1/downtime/:name (deletes all downtime for a host)
- - POST /v1/downtime/:name (will be used to schedule downtime for a host and
-                            its services)
+
+ * List hosts and all current downtime IDs
+  - GET /v1/downtime
+
+ * Delete all downtime for a host
+  - DELETE /v1/downtime/:name
+
+ * Schedule downtime for a host and all its services
+  - POST /v1/downtime/:name
+  - Params:
+   - duration (downtime window expressed in whole seconds)
+   - author (name of downtime author, matching [^a-zA-Z0-9\-\.#\s])
+   - comment (a comment for the downtime, matching [^a-zA-Z0-9\-\.#\s])
+  - All parameters are required.
 
 As you can see, the API is versioned in case of future interface changes.
 

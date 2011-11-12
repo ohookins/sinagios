@@ -73,9 +73,36 @@ describe 'the Sinagios app' do
     last_response.status.should == 404
   end
 
-  it 'does not yet support creation of new downtime' do
+  it 'creates new downtime successfully when provided valid input' do
+    host = 'localhost'
+    duration = '5'
+    author = 'Test Dude'
+    comment = 'Test downtime'
+
+    # Mock calls to schedule the downtime
+    @fakenagios.expects(:schedule_host_downtime).with(host, duration, author, comment)
+    @fakenagios.expects(:schedule_services_downtime).with(host, duration, author, comment)
+
+    post "/v1/downtime/#{host}", params = {:duration => duration, :author => author, :comment => comment}
+    last_response.body.should == ''
+    last_response.status.should == 200
+  end
+
+  it 'returns an error when no required fields for scheduling downtime are supplied' do
     post '/v1/downtime/localhost'
-    last_response.body.should == "Not yet implemented!"
-    last_response.status.should == 404
+    last_response.body.should == "Require these fields: duration, author, comment\n"
+    last_response.status.should == 400
+  end
+
+  it 'returns an error when no duration for scheduling downtime is supplied' do
+    post '/v1/downtime/localhost', params = {:author => 'Test Guy', :comment => 'No duration'}
+    last_response.body.should == "Require these fields: duration, author, comment\n"
+    last_response.status.should == 400
+  end
+
+  it 'returns an error when invalid author information for scheduling downtime is supplied' do
+    post '/v1/downtime/localhost', params = {:duration => '60', :author => '$@!@!', :comment => 'No duration'}
+    last_response.body.should == "Require these fields: duration, author, comment\n"
+    last_response.status.should == 400
   end
 end
