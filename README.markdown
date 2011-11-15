@@ -17,6 +17,8 @@ Requirements
 These are the versions I develop with. It will probably work more or less the
 same on similar, but not equal, major versions.
 
+Optionally you need fpm for packaging.
+
 Operations
 ----------
 
