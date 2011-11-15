@@ -75,3 +75,19 @@ post '/v1/downtime/:name/?' do
   nagios.schedule_services_downtime(params[:name], params[:duration], params[:author], params[:comment])
   status 200
 end
+
+# Health check for monitoring systems
+get '/v1/health/?' do
+  # Just try to verify the command and status files look ok, rescue the
+  # exception and allow the message to propagate to the output with a
+  # reasonable error code.
+  begin
+    nagios = Nagios.new
+  rescue Exception => detail
+    body detail.message
+    status 500
+  else
+    body 'OK'
+    status 200
+  end
+end

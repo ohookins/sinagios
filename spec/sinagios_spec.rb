@@ -105,4 +105,17 @@ describe 'the Sinagios app' do
     last_response.body.should == "Require these fields: duration, author, comment\n"
     last_response.status.should == 400
   end
+
+  it 'passes the health check when the nagios object is created successfully' do
+    get '/v1/health'
+    last_response.body.should == 'OK'
+    last_response.status.should == 200
+  end
+
+  it 'fails the health check when the nagios object throws an exception during creation' do
+    Nagios.stubs(:new).raises(Exception)
+    get '/v1/health'
+    last_response.body.should_not == 'OK'
+    last_response.status.should == 500
+  end
 end

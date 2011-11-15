@@ -21,22 +21,22 @@ describe Nagios do
     it 'raises an exception when the command file is missing' do
       FileUtils.rm(@cmd_file)
       FileUtils.rm(@status_file)
-      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NonExistentCmdFile)
+      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NagiosFileError, /not found/)
     end
 
     it 'raises an exception when the command file is unwritable' do
       FileUtils.chmod(0444, @cmd_file)
-      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NonWritableCmdFile)
+      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NagiosFileError, /not writable/)
     end
 
     it 'raises an exception when the status file is missing' do
       FileUtils.rm(@status_file)
-      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NonExistentStatusFile)
+      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NagiosFileError, /not found/)
     end
 
-    it 'raises an exception when the status file is unwritable' do
-      FileUtils.chmod(0444, @status_file)
-      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NonWritableStatusFile)
+    it 'raises an exception when the status file is unreadable' do
+      FileUtils.chmod(0000, @status_file)
+      expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NagiosFileError, /not readable/)
     end
   end
 

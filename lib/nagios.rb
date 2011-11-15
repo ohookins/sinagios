@@ -1,21 +1,21 @@
-class NonExistentCmdFile < Exception; end
-class NonWritableCmdFile < Exception; end
-class NonExistentStatusFile < Exception; end
-class NonWritableStatusFile < Exception; end
+class NagiosFileError < Exception; end
 class ParseError < Exception; end
 
 class Nagios
-  # FIXME: Harvest the cmd_file/status_file location from actual Nagios config
-  # somehow
+  # FIXME: Make the status and command file locations configurable
   def initialize(cmd_file = '/var/spool/nagios/cmd/nagios.cmd',
                  status_file = '/var/log/nagios/status.dat')
     @cmd_file = cmd_file
     @status_file = status_file
 
-    unless File.exist?(@cmd_file) then raise NonExistentCmdFile end
-    unless File.writable?(@cmd_file) then raise NonWritableCmdFile end
-    unless File.exist?(@status_file) then raise NonExistentStatusFile end
-    unless File.writable?(@status_file) then raise NonWritableStatusFile end
+    unless File.exist?(@cmd_file) then raise NagiosFileError,
+      "Command File #{@cmd_file} not found" end
+    unless File.writable?(@cmd_file) then raise NagiosFileError,
+      "Command File #{@cmd_file} not writable" end
+    unless File.exist?(@status_file) then raise NagiosFileError,
+      "Status File #{@status_file} not found" end
+    unless File.readable?(@status_file) then raise NagiosFileError,
+      "Status File #{@status_file} not readable" end
   end
 
   # read the status file and return the parsed downtime
