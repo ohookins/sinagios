@@ -16,6 +16,7 @@ You need these to run Sinagios.
 
  * ruby 1.8.7
  * sinatra 1.3.1
+ * rack 1.3.5
  * json 1.5.3
 
 Optional
@@ -28,6 +29,45 @@ These are used mainly for testing or packaging.
  * mocha 0.9.8
  * thin 1.2.11 (if you don't want to use WEBrick, Passenger or some other web
    server)
+
+Installation
+============
+Manual
+------
+ * git clone this repository
+ * install the above mandatory gems
+ * mkdir /etc/sinagios and copy rpmfiles/{sinagios.conf,config.ru} into it
+ * customise /etc/sinagios/sinagios.conf to match your command and status file
+   locations
+ * start with 'rake rackup'
+
+Preferred
+---------
+I only have methods implemented for build RPM packages. Sorry - don't hate me.
+
+ * Build the sinagios package using 'rake package'
+ * Build the dependent gems using 'rake package_gems'
+ * Install the sinagios package and mandatory gem packages.
+ * Start sinagios using 'service sinagios start'
+ * Optionally use the Puppet module to deploy and maintain the application.
+
+Configuration
+-------------
+Sinagios will determine the location of the Nagios files from:
+ * Anything passed to Nagios#new (code internals)
+ * Config file specified by environment variable SINAGIOS_CONFIG
+ * Config file /etc/sinagios/sinagios.conf
+ * Defaults:
+  * Command file: /var/spool/nagios/cmd/nagios.cmd
+  * Status file: /var/log/nagios/status.dat
+
+If you are using the configuration file in /etc/sinagios/sinagios.conf or a
+location provided by the environment variable SINAGIOS_CONFIG you can override
+either or both of these parameters in the YAML format like the following:
+
+---
+cmd_file: /path/to/nagios.cmd
+status_file: /path/to/status.dat
 
 Operations
 ==========

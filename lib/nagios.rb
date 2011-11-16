@@ -1,13 +1,41 @@
+require 'yaml'
+
 class NagiosFileError < Exception; end
 class ParseError < Exception; end
 
 class Nagios
+  attr_reader :cmd_file, :status_file
+
   # FIXME: Make the status and command file locations configurable
-  def initialize(cmd_file = '/var/spool/nagios/cmd/nagios.cmd',
-                 status_file = '/var/log/nagios/status.dat')
+  def initialize(cmd_file=nil, status_file=nil)
     @cmd_file = cmd_file
     @status_file = status_file
 
+    # Use locations of Nagios files in the following order:
+    # 1. Values passed in to Nagios#new
+    # 2. Values found in the file referred to by ENV['SINAGIOS_CONFIG']
+    # 3. Values found in /etc/sinagios/sinagios.conf
+    # 4. Defaults
+
+    # Fall through to config files if we didn't get a value
+    if [@cmd_file, @status_file].include?(nil)
+
+      # Use an alternate config file if an override was provided
+      @config_file = ENV['SINAGIOS_CONFIG'] || '/etc/sinagios/sinagios.conf'
+
+      # Load the values for cmd_file and status_file if we have them
+      if File.readable?(@config_file)
+        config = YAML::load_file(@config_file)
+        @cmd_file = config['cmd_file']
+        @status_file = config['status_file']
+      end
+    end
+
+    # Fall back to defaults if we still don't have values
+    @cmd_file = '/var/spool/nagios/cmd/nagios.cmd' unless @cmd_file
+    @status_file = '/var/log/nagios/status.dat' unless @status_file
+
+    # Catch common problems with the Nagios files we depend on
     unless File.exist?(@cmd_file) then raise NagiosFileError,
       "Command File #{@cmd_file} not found" end
     unless File.writable?(@cmd_file) then raise NagiosFileError,

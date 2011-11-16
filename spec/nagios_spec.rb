@@ -38,6 +38,21 @@ describe Nagios do
       FileUtils.chmod(0000, @status_file)
       expect { Nagios.new(@cmd_file, @status_file) }.to raise_error(NagiosFileError, /not readable/)
     end
+
+    it 'uses the configuration file specified by SINAGIOS_CONFIG' do
+      # Prepare a dummy config
+      configfile = File.join(@tmpdir, 'sinagios.conf')
+      File.open(configfile, 'w') do |f|
+        config = {'cmd_file' => @cmd_file, 'status_file' => @status_file}
+        f.puts(YAML::dump(config))
+      end
+
+      # Set the environment variable override and verify the configs are set correctly
+      ENV['SINAGIOS_CONFIG'] = configfile
+      nagios = Nagios.new()
+      nagios.cmd_file.should eql(@cmd_file)
+      nagios.status_file.should eql(@status_file)
+    end
   end
 
   describe '#get_all_downtime' do

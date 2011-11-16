@@ -27,9 +27,14 @@ safe_require 'rcov/rcovtask' do
   end
 end
 
-desc 'Run the application from the console.'
+desc 'Run the application from the console directly (for development)'
 task :run do
   sh "ruby #{File.join(File.dirname(__FILE__), 'sinagios.rb')}"
+end
+
+desc 'Run the application daemonised through rackup (simulates production)'
+task :rackup do
+  sh "rackup -I #{File.dirname(__FILE__)} -r sinagios -p 4567 -E production -D rpmfiles/config.ru"
 end
 
 desc 'Package Sinagios using fpm'
@@ -41,7 +46,9 @@ task :package do
   # Create a tempdir and copy things into place for fpm
   Dir.mktmpdir do |dir|
     FileUtils.mkdir_p("#{dir}/usr/lib/sinagios/")
+    FileUtils.mkdir_p("#{dir}/etc/sinagios/")
     FileUtils.cp_r(['sinagios.rb', 'lib'], "#{dir}/usr/lib/sinagios/")
+    FileUtils.cp_r(['rpmfiles/config.ru', 'rpmfiles/sinagios.conf'], "#{dir}/etc/sinagios/")
 
     # Create the RPM with fpm
     # TODO: Use fpm as a library
@@ -62,6 +69,8 @@ task :package_gems do
 
   # list our required gems and versions
   gemlist = { 'rake'      => '0.8.7',
+              'rack'      => '1.3.5',
+              'thin'      => '1.2.11',
               'sinatra'   => '1.3.1',
               'rspec'     => '2.5.0',
               'rack-test' => '0.6.1',
