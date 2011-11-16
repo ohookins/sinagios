@@ -1,0 +1,7 @@
+/var/log/sinagios/sinagios.log {
+    compress
+    daily
+    rotate 30
+    dateext
+    copytruncate
+}

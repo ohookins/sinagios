@@ -34,7 +34,7 @@ end
 
 desc 'Run the application daemonised through rackup (simulates production)'
 task :rackup do
-  sh "rackup -I #{File.dirname(__FILE__)} -r sinagios -p 4567 -E production -D rpmfiles/config.ru"
+  sh "rackup -I #{File.dirname(__FILE__)} -r sinagios -p 4567 -E production -D -s thin rpmfiles/config.ru"
 end
 
 desc 'Package Sinagios using fpm'
@@ -45,10 +45,16 @@ task :package do
 
   # Create a tempdir and copy things into place for fpm
   Dir.mktmpdir do |dir|
+    FileUtils.chmod(0755, dir) # due to https://github.com/jordansissel/fpm/issues/121
     FileUtils.mkdir_p("#{dir}/usr/lib/sinagios/")
     FileUtils.mkdir_p("#{dir}/etc/sinagios/")
+    FileUtils.mkdir_p("#{dir}/etc/logrotate.d/")
+    FileUtils.mkdir_p("#{dir}/etc/rc.d/init.d/")
+    FileUtils.mkdir_p("#{dir}/var/log/sinagios/")
     FileUtils.cp_r(['sinagios.rb', 'lib'], "#{dir}/usr/lib/sinagios/")
     FileUtils.cp_r(['rpmfiles/config.ru', 'rpmfiles/sinagios.conf'], "#{dir}/etc/sinagios/")
+    FileUtils.cp_r('rpmfiles/sinagios.logrotate', "#{dir}/etc/logrotate.d/")
+    FileUtils.cp_r('rpmfiles/sinagios.init', "#{dir}/etc/rc.d/init.d/")
 
     # Create the RPM with fpm
     # TODO: Use fpm as a library
@@ -59,7 +65,9 @@ task :package do
     PKGMAINT = 'ohookins@gmail.com'
     PKGTYPE = 'rpm'
     PKGSOURCE = 'dir'
-    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} -d #{PKGDEPENDS} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE}"
+    PKGPRESCRIPT = 'rpmfiles/sinagios.preinstall'
+    PKGPOSTSCRIPT = 'rpmfiles/sinagios.postinstall'
+    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} -d #{PKGDEPENDS} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT}"
   end
 end
 

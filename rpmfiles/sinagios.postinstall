@@ -1,0 +1,2 @@
+# Have to do this since FPM doesn't know how to set ownership on files
+chown sinagios.sinagios /var/log/sinagios
