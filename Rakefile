@@ -92,7 +92,8 @@ task :package_gems do
               'rack-protection'    => '1.1.4',
               'tilt'               => '1.3.3',
               'eventmachine'       => '0.12.10',
-              'daemons'            => '1.1.4'
+              'daemons'            => '1.1.4',
+              'diff-lcs'           => '1.1.2'
             }
 
   gemlist.each_pair do |gemname, gemversion|
