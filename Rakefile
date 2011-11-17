@@ -67,7 +67,8 @@ task :package do
     PKGSOURCE = 'dir'
     PKGPRESCRIPT = 'rpmfiles/sinagios.preinstall'
     PKGPOSTSCRIPT = 'rpmfiles/sinagios.postinstall'
-    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} -d #{PKGDEPENDS} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT}"
+    PKGFILELIST = 'rpmfiles/sinagios.filelist'
+    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} -d #{PKGDEPENDS} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} --inputs #{PKGFILELIST}"
   end
 end
 

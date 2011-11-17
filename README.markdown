@@ -18,6 +18,7 @@ You need these to run Sinagios.
  * sinatra 1.3.1
  * rack 1.3.5
  * json 1.5.3
+ * thin 1.2.11
 
 Optional
 --------
@@ -27,8 +28,6 @@ These are used mainly for testing or packaging.
  * rspec 2.5.0
  * rack-test 0.6.1
  * mocha 0.9.8
- * thin 1.2.11 (if you don't want to use WEBrick, Passenger or some other web
-   server)
 
 Installation
 ============

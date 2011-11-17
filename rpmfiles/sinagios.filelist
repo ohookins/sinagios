@@ -1,0 +1,7 @@
+etc/logrotate.d/sinagios.logrotate
+etc/rc.d/init.d/sinagios.init
+etc/sinagios/config.ru
+etc/sinagios/sinagios.conf
+usr/lib/sinagios/lib/nagios.rb
+usr/lib/sinagios/sinagios.rb
+var/log/sinagios
