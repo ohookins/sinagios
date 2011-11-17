@@ -81,10 +81,18 @@ task :package_gems do
               'rack'      => '1.3.5',
               'thin'      => '1.2.11',
               'sinatra'   => '1.3.1',
-              'rspec'     => '2.5.0',
               'rack-test' => '0.6.1',
               'mocha'     => '0.9.8',
-              'json'      => '1.5.3'
+              'json'      => '1.5.3',
+              'rspec'     => '2.5.0',
+              # subcomponents/dependencies:
+              'rspec-core'         => '2.5.0',
+              'rspec-expectations' => '2.5.0',
+              'rspec-mocks'        => '2.5.0',
+              'rack-protection'    => '1.1.4',
+              'tilt'               => '1.3.3',
+              'eventmachine'       => '0.12.10',
+              'daemons'            => '1.1.4'
             }
 
   gemlist.each_pair do |gemname, gemversion|
