@@ -58,8 +58,8 @@ task :package do
   FileUtils.mkdir_p("#{dir}/var/log/sinagios/")
   FileUtils.cp_r(['sinagios.rb', 'lib'], "#{dir}/usr/lib/sinagios/")
   FileUtils.cp_r(['rpmfiles/config.ru', 'rpmfiles/sinagios.conf'], "#{dir}/etc/sinagios/")
-  FileUtils.cp_r('rpmfiles/sinagios.logrotate', "#{dir}/etc/logrotate.d/")
-  FileUtils.cp_r('rpmfiles/sinagios.init', "#{dir}/etc/rc.d/init.d/")
+  FileUtils.cp_r('rpmfiles/sinagios.logrotate', "#{dir}/etc/logrotate.d/sinagios")
+  FileUtils.cp_r('rpmfiles/sinagios.init', "#{dir}/etc/rc.d/init.d/sinagios")
 
   # Create the RPM with fpm
   # TODO: Use fpm as a library

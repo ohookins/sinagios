@@ -7,6 +7,7 @@
 ## END INIT INFO
 #
 # chkconfig: 345 1 95
+# description: Sinagios is a RESTful interface to Nagios.
 
 . /etc/init.d/functions
 
@@ -15,7 +16,9 @@ RC=0
 
 case "$1" in
   start)
-    rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru
+    touch $PIDFILE
+    chown sinagios. $PIDFILE
+    /sbin/runuser -s /bin/bash - sinagios -c 'rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru'
     RC=$?
     [ $RC -eq 0 ] && success
     [ $RC -ne 0 ] && failure
