@@ -18,17 +18,16 @@ case "$1" in
   start)
     touch $PIDFILE
     chown sinagios. $PIDFILE
-    /sbin/runuser -s /bin/bash - sinagios -c 'rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru'
+    /sbin/runuser -s /bin/bash sinagios -c "/usr/bin/rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru >/dev/null 2>&1"
     RC=$?
-    [ $RC -eq 0 ] && success
-    [ $RC -ne 0 ] && failure
+    [ $RC -eq 0 ] && success || failure
     ;;
   stop)
     # rackup stupidly only exits graceful on SIGINT
     killproc -p $PIDFILE rackup -INT
     RC=$?
-    [ $RC -eq 0 ] && success
-    [ $RC -ne 0 ] && failure
+    rm -f $PIDFILE
+    [ $RC -eq 0 ] && success || failure
     ;;
   status)
     status -p $PIDFILE rackup
