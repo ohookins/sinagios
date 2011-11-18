@@ -1,4 +1,4 @@
-/var/log/sinagios/sinagios.log {
+/var/log/sinagios/*.log {
     compress
     daily
     rotate 30

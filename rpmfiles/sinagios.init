@@ -14,20 +14,28 @@
 PIDFILE=/var/run/sinagios.pid
 RC=0
 
-case "$1" in
-  start)
+start() {
     touch $PIDFILE
     chown sinagios. $PIDFILE
-    /sbin/runuser -s /bin/bash sinagios -c "/usr/bin/rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru >/dev/null 2>&1"
+    /sbin/runuser -s /bin/bash sinagios -c "/usr/bin/rackup -I /usr/lib/sinagios -r sinagios -p 4567 -E production -D -P $PIDFILE -s thin /etc/sinagios/config.ru"
     RC=$?
     [ $RC -eq 0 ] && success || failure
-    ;;
-  stop)
-    # rackup stupidly only exits graceful on SIGINT
+}
+
+stop() {
+    # rackup stupidly only exits gracefully on SIGINT
     killproc -p $PIDFILE rackup -INT
     RC=$?
     rm -f $PIDFILE
     [ $RC -eq 0 ] && success || failure
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
     ;;
   status)
     status -p $PIDFILE rackup
