@@ -1,5 +1,5 @@
 rvm:
- - 1.8.5
+ - 1.8.6
 gemfile:
  - gemfiles/Gemfile.ruby-1.8.5
 script: "rake test rcov"
