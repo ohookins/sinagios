@@ -1,0 +1,10 @@
+rvm:
+ - 1.8.5
+ - rack-1.2.4
+ - thin-1.2.11
+ - sinatra-1.2.7
+ - rack-test-0.6.1
+ - mocha-0.9.8
+ - json-1.5.3
+ - rspec-2.5.0
+script: "rake test rcov"
