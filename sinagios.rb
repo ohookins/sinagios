@@ -5,13 +5,6 @@ require 'rubygems'
 require 'sinatra'
 require 'json'
 require 'nagios'
-require 'logger'
-
-# Set up logging of accesses.
-# Rack::CommonLogger will call @logger.write :(
-Logger.class_eval { alias :write :'<<' }
-logger = Logger.new('/var/log/sinagios/access.log')
-use Rack::CommonLogger, logger
 
 # List all the downtime scheduled for all hosts and services
 get '/v1/downtime/?' do
