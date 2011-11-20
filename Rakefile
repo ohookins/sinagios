@@ -95,6 +95,7 @@ task :package_gems do
               'mocha'     => '0.9.8',
               'json'      => '1.5.3',
               'rspec'     => '2.5.0',
+              'rcov'      => '0.9.11',
               # subcomponents/dependencies:
               'rspec-core'         => '2.5.0',
               'rspec-expectations' => '2.5.0',
