@@ -59,7 +59,7 @@ describe Nagios do
       @status_file = File.join(File.dirname(__FILE__), 'test_data', 'status.dat.001')
       nagios = Nagios.new(@cmd_file, @status_file)
 
-      nagios.get_all_downtime.should eql({'example1' => {:host => [1], :service => [2]}, 'example2' => {:host => [3], :service => []}})
+      nagios.get_all_downtime.should == {'example1' => {:host => [1], :service => [2]}, 'example2' => {:host => [3], :service => []}}
     end
 
     it 'raises exceptions when a host id is not found in the downtime block' do
@@ -70,7 +70,7 @@ describe Nagios do
 
     it 'operates correctly when there is no scheduled downtime' do
       nagios = Nagios.new(@cmd_file, @status_file)
-      nagios.get_all_downtime.should eql({})
+      nagios.get_all_downtime.should == {}
     end
   end
 
