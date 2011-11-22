@@ -15,8 +15,8 @@ Mandatory
 You need these to run Sinagios.
 
  * ruby 1.8.7
- * sinatra 1.3.1
- * rack 1.3.5
+ * sinatra 1.2.7
+ * rack 1.2.4
  * json 1.5.3
  * thin 1.2.11
 
@@ -27,7 +27,6 @@ These are used mainly for testing or packaging.
  * rake 0.8.7
  * rspec 2.5.0
  * rack-test 0.6.1
- * mocha 0.9.8
 
 Installation
 ============

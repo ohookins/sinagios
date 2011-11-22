@@ -92,7 +92,6 @@ task :package_gems do
               'thin'      => '1.2.11',
               'sinatra'   => '1.2.7',
               'rack-test' => '0.6.1',
-              'mocha'     => '0.9.8',
               'json'      => '1.5.3',
               'rspec'     => '2.5.0',
               'rcov'      => '0.9.11',

@@ -6,7 +6,6 @@ class ParseError < Exception; end
 class Nagios
   attr_reader :cmd_file, :status_file
 
-  # FIXME: Make the status and command file locations configurable
   def initialize(cmd_file=nil, status_file=nil)
     @cmd_file = cmd_file
     @status_file = status_file
