@@ -1,1 +1,1 @@
-/usr/bin/getent passwd sinagios || /usr/sbin/useradd -d /var/empty -s /bin/false -c 'Sinagios User' -G nagios -M -r sinagios
+/usr/bin/getent passwd sinagios >/dev/null || /usr/sbin/useradd -d /var/empty -s /bin/false -c 'Sinagios User' -G nagios -M -r sinagios
