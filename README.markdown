@@ -110,6 +110,11 @@ Roadmap
 Aside from tidy ups, effectively this 1.0.0 version is feature complete.
 If there are features you'd like to see implemented, please file an issue.
 
+Continuous Integration
+======================
+You can see the current build status for Sinagios here:
+ * http://travis-ci.org/#!/ohookins/sinagios
+
 Copyright
 =========
 This program and libraries are copyright 2011 Oliver Hookins, and licensed
