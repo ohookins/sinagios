@@ -1,5 +1,5 @@
-etc/logrotate.d/sinagios.logrotate
-etc/rc.d/init.d/sinagios.init
+etc/logrotate.d/sinagios
+etc/rc.d/init.d/sinagios
 etc/sinagios/config.ru
 etc/sinagios/sinagios.conf
 usr/lib/sinagios/lib/nagios.rb

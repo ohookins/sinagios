@@ -14,7 +14,7 @@ Mandatory
 ---------
 You need these to run Sinagios.
 
- * ruby 1.8.7
+ * ruby 1.8.5 or later
  * sinatra 1.2.7
  * rack 1.2.4
  * json 1.5.3
@@ -27,6 +27,7 @@ These are used mainly for testing or packaging.
  * rake 0.8.7
  * rspec 2.5.0
  * rack-test 0.6.1
+ * fpm (from https://github.com/ohookins/fpm/tree/inputs_file)
 
 Installation
 ============
@@ -41,8 +42,9 @@ Manual
 
 Preferred
 ---------
-I only have methods implemented for build RPM packages. Sorry - don't hate me.
+I only have methods implemented for building RPM packages. Sorry - don't hate me.
 
+ * Install fpm (for now only from my fork referenced above)
  * Build the sinagios package using 'rake package'
  * Build the dependent gems using 'rake package_gems'
  * Install the sinagios package and mandatory gem packages.
