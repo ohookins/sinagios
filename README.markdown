@@ -27,7 +27,7 @@ These are used mainly for testing or packaging.
  * rake 0.8.7
  * rspec 2.5.0
  * rack-test 0.6.1
- * fpm (from https://github.com/ohookins/fpm/tree/inputs_file)
+ * fpm (see notes below)
 
 Installation
 ============
@@ -44,7 +44,12 @@ Preferred
 ---------
 I only have methods implemented for building RPM packages. Sorry - don't hate me.
 
- * Install fpm (for now only from my fork referenced above)
+Right now fpm (used for packaging) does not have the required features in the
+mainline code tree (specifically, using a filelist and being able to specify
+configuration files). You can take a look at my fork and merge the patches from
+the config_files and inputs_file branches to get a working version. Or just bug
+me for an RPM.
+
  * Build the sinagios package using 'rake package'
  * Build the dependent gems using 'rake package_gems'
  * Install the sinagios package and mandatory gem packages.

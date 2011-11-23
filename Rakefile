@@ -75,9 +75,10 @@ task :package do
     PKGPRESCRIPT = 'rpmfiles/sinagios.preinstall'
     PKGPOSTSCRIPT = 'rpmfiles/sinagios.postinstall'
     PKGFILELIST = 'rpmfiles/sinagios.filelist'
+    PKGCONFIGS = ['/etc/sinagios/config.ru', '/etc/sinagios/sinagios.conf']
 
     # Actually create the package now
-    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} #{PKGDEPENDS.map { |p| '-d '+p }.join(' ')} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} --inputs #{PKGFILELIST}"
+    sh "fpm -n #{PKGNAME} -v #{PKGVERSION} #{PKGDEPENDS.map { |p| '-d '+p }.join(' ')} -a #{PKGARCH} -m #{PKGMAINT} -C #{dir} -t #{PKGTYPE} -s #{PKGSOURCE} --pre-install #{PKGPRESCRIPT} --post-install #{PKGPOSTSCRIPT} --inputs #{PKGFILELIST} #{PKGCONFIGS.map { |c| '--config-files '+c }.join(' ')}"
 
   # ensure the tmpdir is cleaned up regardless
   ensure

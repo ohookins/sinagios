@@ -1,0 +1,9 @@
+if [ $1 -eq 1 ]; then
+  # Tear down service and init script if we're not upgrading
+  /sbin/service sinagios stop
+  /sbin/chkconfig --del sinagios
+
+  # Notify user of remaining data
+  echo "The sinagios user account and logs in /var/log/sinagios will need to be"
+  echo "removed manually after uninstallation of the package."
+fi

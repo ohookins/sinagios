@@ -1,6 +1,8 @@
 # Have to do this since FPM doesn't know how to set ownership on files
-/bin/chown sinagios.sinagios /var/log/sinagios
+/bin/chown -R sinagios.sinagios /var/log/sinagios
 
-# Set up init script
-/sbin/chkconfig --add sinagios
-/sbin/chkconfig sinagios on
+# Set up init script on initial install
+if [ $1 -eq 1 ]; then
+  /sbin/chkconfig --add sinagios
+  /sbin/chkconfig sinagios on
+fi
