@@ -14,6 +14,7 @@ Mandatory
 ---------
 You need these to run Sinagios.
 
+ * Nagios 2.x or later (see notes below)
  * ruby 1.8.5 or later
  * sinatra 1.2.7
  * rack 1.2.4
@@ -29,8 +30,24 @@ These are used mainly for testing or packaging.
  * rack-test 0.6.1
  * fpm (see notes below)
 
+Nagios Version
+--------------
+In Nagios version 2.x the downtime data was maintained in a separate file to
+the status information. Sinagios presently only looks inside a single file to
+get information on downtime so if you are using Nagios 2.x please set the
+status_file entry in the configuration to point to your downtime file (usually
+something like /var/log/nagios/downtime.dat).
+
 Installation
 ============
+Assumptions
+-----------
+ * Apache httpd is installed and in the nagios group.
+ * If you want security, authentication etc you will proxypass sinagios through
+   httpd (or your web frontend of choice).
+ * Nagios is installed and running and the external command interface is
+   enabled.
+
 Manual
 ------
  * git clone this repository
@@ -73,6 +90,10 @@ either or both of these parameters in the YAML format like the following:
 ---
 cmd_file: /path/to/nagios.cmd
 status_file: /path/to/status.dat
+
+
+Please see the notes in the Requirements section about the location of the
+status file depending on your version of Nagios.
 
 Operations
 ==========
