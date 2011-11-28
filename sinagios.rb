@@ -73,7 +73,7 @@ post '/v1/downtime/:name/?' do
   nagios = Nagios.new
   nagios.schedule_host_downtime(params[:name], params[:duration], params[:author], params[:comment])
   nagios.schedule_services_downtime(params[:name], params[:duration], params[:author], params[:comment])
-  status 200
+  status 201
 end
 
 # Health check for monitoring systems

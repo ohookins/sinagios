@@ -103,7 +103,7 @@ describe 'the Sinagios app' do
 
     post "/v1/downtime/#{host}", params = {:duration => duration, :author => author, :comment => comment}
     last_response.body.should == ''
-    last_response.status.should == 200
+    last_response.status.should == 201
   end
 
   it 'returns an error when no required fields for scheduling downtime are supplied' do
