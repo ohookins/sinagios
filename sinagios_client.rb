@@ -10,6 +10,7 @@ require 'optparse'
 
 class SinagiosClient
   def initialize(argv)
+    @operation = nil
     @options = {}
     @option_parser = OptionParser.new do |opts|
       # Use a config file if present
@@ -38,44 +39,73 @@ class SinagiosClient
       opts.on('-p <password>', '--password', 'Password used with HTTP Basic Authentication (if applicable)') do |p|
         @options[:password] = p
       end
-      opts.on('-o <operation>', '--operation', 'SCHEDULE/DELETE downtime') do |o|
-        @options[:operation] = o
+      opts.on('-o <operation>', '--operation', "One of: #{valid_operations().join('/')}") do |o|
+        @operation = o
       end
       opts.on('-d <duration>', '--duration', 'Duration of scheduled downtime to be set, in seconds') do |d|
         @options[:duration] = d
       end
-      opts.on('-c <comment>', '--comment', 'Comment to add to the scheduled dowtime') do |c|
+      opts.on('-c <comment>', '--comment', 'Comment to add to the scheduled downtime') do |c|
         @options[:comment] = c
       end
     end
-    @option_parser.parse!(argv)
 
-    # Set up our compulsory required options
-    required_options = [:uri, :hosts, :operation]
-    if @options.keys.include?(:operation) and @options[:operation] == 'SCHEDULE'
-      # Additional options needed when scheduling downtime
-      required_options += [:author, :duration, :comment]
+    # Nicely handle incorrect options rather than spewing forth the exception
+    begin
+      @option_parser.parse!(argv)
+    rescue OptionParser::InvalidOption => detail
+      $stderr.puts detail.message
+      die()
     end
 
-    # Verify we have all the required options
-    required_options.each do |option|
-      if !@options.keys.include?(option)
-        $stderr.puts @option_parser.help()
-        exit(1)
-      end
+    # At a minimum we need an operation to progress. Each operation can handle
+    # checking for its required options by itself.
+    if ! @operation
+      $stderr.puts "Minimum required arguments: --operation, --uri, --hosts\n\n"
+      die()
     end
   end
 
+  # Just run which ever operation has been set, but give an informative message
+  # if the operation doesn't exist yet.
+  def run()
+    if self.respond_to?(@operation)
+      self.send(@operation)
+    else
+      $stderr.puts "Operation '#{@operation}' is not supported."
+      $stderr.puts "Valid operations are: #{valid_operations().join(', ')}\n\n"
+      die()
+    end
+  end
+
+  def schedule()
+    #
+  end
+
+  def delete()
+    #
+  end
+
+  private
+  # just return our default config location
   def config_file_path()
     File.join(ENV['HOME'], '.sinagios.conf')
   end
 
-  def run()
+  # print usage and exit non-zero
+  def die()
+    $stderr.puts @option_parser.help()
+    exit(1)
+  end
+
+  # Helper for generating a list of valid operations we can run against the API
+  def valid_operations()
+    self.methods - Object.methods - ['run']
   end
 end
 
 # Don't invoke client class unless we're actually running the client.
 if __FILE__ == $PROGRAM_NAME
   sc = SinagiosClient.new(ARGV)
-  sc.run
+  sc.run()
 end
