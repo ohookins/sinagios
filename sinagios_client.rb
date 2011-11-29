@@ -55,14 +55,14 @@ class SinagiosClient
       @option_parser.parse!(argv)
     rescue OptionParser::InvalidOption => detail
       $stderr.puts detail.message
-      die()
+      usage()
     end
 
     # At a minimum we need an operation to progress. Each operation can handle
     # checking for its required options by itself.
     if ! @operation
       $stderr.puts "Minimum required arguments: --operation, --uri, --hosts\n\n"
-      die()
+      usage()
     end
   end
 
@@ -74,7 +74,7 @@ class SinagiosClient
     else
       $stderr.puts "Operation '#{@operation}' is not supported."
       $stderr.puts "Valid operations are: #{valid_operations().join(', ')}\n\n"
-      die()
+      usage()
     end
   end
 
@@ -93,7 +93,7 @@ class SinagiosClient
   end
 
   # print usage and exit non-zero
-  def die()
+  def usage()
     $stderr.puts @option_parser.help()
     exit(1)
   end
