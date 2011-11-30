@@ -78,15 +78,32 @@ class SinagiosClient
     end
   end
 
+  # schedule downtime for a host and all its services
   def schedule()
-    #
+    check_sufficient_options([:hosts, :uri, :author, :comment, :duration])
   end
 
+  # delete all downtime for one or more hosts
   def delete()
-    #
+    check_sufficient_options([:hosts, :uri])
   end
 
   private
+  # Check the options hash for all required options
+  def check_sufficient_options(options)
+    sufficient = true
+    options.each do |o|
+      if ! @options.has_key?(o)
+        sufficient = false
+      end
+    end
+
+    if ! sufficient
+      $stderr.puts "Minimum required arguments: #{options.collect { |o| '--' + o.to_s }.join(', ')}\n\n"
+      usage()
+    end
+  end
+
   # just return our default config location
   def config_file_path()
     File.join(ENV['HOME'], '.sinagios.conf')
