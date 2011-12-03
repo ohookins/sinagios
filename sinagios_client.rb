@@ -4,7 +4,7 @@
 # Copyright 2011 Oliver Hookins
 # Licenced under the GPLv2 or later.
 
-require 'net/http'
+require 'net/https' # also pulls in net/http and uri
 require 'yaml'
 require 'optparse'
 
@@ -42,7 +42,7 @@ class SinagiosClient
       opts.on('-o <operation>', '--operation', "One of: #{valid_operations().join('/')}") do |o|
         @operation = o
       end
-      opts.on('-d <duration>', '--duration', 'Duration of scheduled downtime to be set, in seconds') do |d|
+      opts.on('-d <duration>', '--duration', Integer, 'Duration of scheduled downtime to be set, in seconds') do |d|
         @options[:duration] = d
       end
       opts.on('-c <comment>', '--comment', 'Comment to add to the scheduled downtime') do |c|
@@ -70,37 +70,104 @@ class SinagiosClient
   # if the operation doesn't exist yet.
   def run()
     if self.respond_to?(@operation)
-      self.send(@operation)
+      # Set return code based on success of operation
+      rc = self.send(@operation) ? 0 : 1
     else
       $stderr.puts "Operation '#{@operation}' is not supported."
       $stderr.puts "Valid operations are: #{valid_operations().join(', ')}\n\n"
       usage()
     end
+
+    return rc
   end
 
   # schedule downtime for a host and all its services
   def schedule()
-    check_sufficient_options([:hosts, :uri, :author, :comment, :duration])
+    # Check options and set up the form data used for the downtime
+    check_valid_options([:hosts, :uri, :author, :comment, :duration])
+    formdata = {'author' => @options[:author], 'comment' => @options[:comment], 'duration' => @options[:duration].to_s}
+
+    # Make a single connection to avoid multiple handshakes
+    set_up_connection()
+
+    # Iterate over each host entering maintenance
+    success = true
+    @options[:hosts].each do |host|
+      res = post_request(host, formdata)
+
+      if res.code != '201'
+        $stderr.puts "#{res.code} #{res.body} - downtime for #{host} may not have been scheduled."
+        success = false
+      else
+        puts "Downtime scheduled for #{host}"
+      end
+    end
+
+    # Tear down HTTP connection
+    finish_connection()
+    return success
   end
 
   # delete all downtime for one or more hosts
   def delete()
-    check_sufficient_options([:hosts, :uri])
+    check_valid_options([:hosts, :uri])
+
+    # Make a single connection to avoid multiple handshakes
+    set_up_connection()
+
+    # Iterate over each host leaving maintenance
+    success = true
+    @options[:hosts].each do |host|
+      res = delete_request(host)
+
+      if res.code == '404'
+        $stderr.puts "#{res.code} - downtime for #{host} was not found."
+        success = false
+      elsif res.code != '200'
+        $stderr.puts "#{res.code} #{res.body} - downtime for #{host} may not have been deleted."
+        success = false
+      else
+        puts "Downtime deleted for #{host}"
+      end
+    end
+
+    # Tear down HTTP connection
+    finish_connection()
+    return success
   end
 
   private
-  # Check the options hash for all required options
-  def check_sufficient_options(options)
-    sufficient = true
-    options.each do |o|
-      if ! @options.has_key?(o)
-        sufficient = false
-      end
-    end
+  # Do an HTTP POST
+  def post_request(host, formdata)
+    req = Net::HTTP::Post.new(request_path(host))
+    req.set_form_data(formdata)
+    return @http.request(req)
+  end
+
+  # Do an HTTP DELETE
+  def delete_request(host)
+    @http.delete(request_path(host))
+  end
+
+  # Assemble the path for the request based on the host
+  def request_path(host)
+    return (@uri.path + "/downtime/#{host}").squeeze('/') # remove duplicate slashes
+  end
+
+  # Check the options hash for all required options and do some validation
+  def check_valid_options(options)
+    sufficient = options.all? { |o| @options.has_key?(o) }
 
     if ! sufficient
       $stderr.puts "Minimum required arguments: #{options.collect { |o| '--' + o.to_s }.join(', ')}\n\n"
       usage()
+    end
+
+    begin
+      @uri = URI.parse(@options[:uri])
+    rescue URI::InvalidURIError => detail
+      $stderr.puts detail.message
+      exit(1)
     end
   end
 
@@ -119,10 +186,30 @@ class SinagiosClient
   def valid_operations()
     self.methods - Object.methods - ['run']
   end
+
+  # Set up the HTTP(S) connection
+  def set_up_connection()
+    @uri = URI.parse(@options[:uri])
+    @http = Net::HTTP.new(@uri.host, @uri.port)
+    if @uri.scheme == 'https'
+      @http.use_ssl = true
+      @http.instance_eval do
+        @ssl_context = OpenSSL::SSL::SSLContext.new
+        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
+    end
+  end
+
+  # Tear down the HTTP(S) connection
+  def finish_connection()
+    if @http.started?
+      @http.finish()
+    end
+  end
 end
 
 # Don't invoke client class unless we're actually running the client.
 if __FILE__ == $PROGRAM_NAME
   sc = SinagiosClient.new(ARGV)
-  sc.run()
+  exit(sc.run())
 end
