@@ -56,4 +56,20 @@ describe SinagiosClient do
       $stderr.string.should =~ /Operation \'foobar\' is not supported/
     end
   end
+
+  describe '#parse_config_file' do
+    it 'sets options based on the config file if it exists' do
+      fakeconfig = File.join(File.dirname(__FILE__), 'test_data/fakeconfig.conf')
+      SinagiosClient.any_instance.should_receive(:config_file_path).twice.and_return(fakeconfig)
+      expect do
+        sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1'])
+        sc.instance_eval do
+          @options[:uri].should == 'http://example.com/api/'
+          @options[:author].should == 'testdude'
+          @options[:password].should == 'p455w0rd'
+          @options[:warnings].should == false
+        end
+      end.to_not raise_error
+    end
+  end
 end

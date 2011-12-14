@@ -11,19 +11,10 @@ require 'optparse'
 class SinagiosClient
   def initialize(argv)
     @operation = nil
-    @options = {}
+    @options = {:warnings => true}
     @option_parser = OptionParser.new do |opts|
-      # Use a config file if present
-      if File.readable?(config_file_path())
-        config = YAML::load_file(config_file_path())
-      end
-
-      # Load defaults from config file
-      if config
-        @options[:uri] = config[:uri] || nil
-        @options[:author] = config[:author] || nil
-        @options[:password] = config[:password] || nil
-      end
+      # Pull in config values from a config file
+      parse_config_file()
 
       # Parse options from command line, which can override options from file
       opts.banner = "Usage: #{$0} -u <URI> -a <author> [-p <password>] -o <operation> -h <hosts> [-d <duration> -c <comment>]"
@@ -33,8 +24,8 @@ class SinagiosClient
       opts.on('-a <author>', '--author', 'Author field when scheduling downtime. Also used for HTTP Basic Authentication if applicable') do |a|
         @options[:author] = a
       end
-      opts.on('-h <hosts>', '--hosts', 'Host to schedule/destroy downtime for. Multiple hosts can be separated by colons e.g. host1:host2') do |h|
-        @options[:hosts] = h.split(':')
+      opts.on('-h <hosts>', '--hosts', 'Host to schedule/destroy downtime for. Multiple hosts can be separated by commas e.g. host1,host2') do |h|
+        @options[:hosts] = h.split(',')
       end
       opts.on('-p <password>', '--password', 'Password used with HTTP Basic Authentication (if applicable)') do |p|
         @options[:password] = p
@@ -47,6 +38,9 @@ class SinagiosClient
       end
       opts.on('-c <comment>', '--comment', 'Comment to add to the scheduled downtime') do |c|
         @options[:comment] = c
+      end
+      opts.on('-w', '--no-warnings', 'Disable SSL verification warnings') do
+        @options[:warnings] = false
       end
     end
 
@@ -176,6 +170,24 @@ class SinagiosClient
     File.join(ENV['HOME'], '.sinagios.conf')
   end
 
+  # Load a config file
+  def parse_config_file()
+    # Use a config file if present
+    if File.readable?(config_file_path())
+      config = YAML::load_file(config_file_path())
+    end
+
+    # Load defaults from config file
+    if config
+      @options[:uri] = config['uri'] || nil
+      @options[:author] = config['author'] || nil
+      @options[:password] = config['password'] || nil
+
+      # Need to handle the warnings option specially as it is a boolean
+      @options[:warnings] = (config.has_key?('warnings') ? config['warnings'] : true)
+    end
+  end
+
   # print usage and exit non-zero
   def usage()
     $stderr.puts @option_parser.help()
@@ -193,9 +205,14 @@ class SinagiosClient
     @http = Net::HTTP.new(@uri.host, @uri.port)
     if @uri.scheme == 'https'
       @http.use_ssl = true
-      @http.instance_eval do
-        @ssl_context = OpenSSL::SSL::SSLContext.new
-        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+      # Enable SSL verification warnings by default, but allow them to be
+      # disabled.
+      if ! @options[:warnings]
+        @http.instance_eval do
+          @ssl_context = OpenSSL::SSL::SSLContext.new
+          @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        end
       end
     end
   end

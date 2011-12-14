@@ -26,7 +26,7 @@ Optional
 These are used mainly for testing or packaging.
 
  * rake 0.8.7
- * rspec 2.5.0
+ * rspec 2.6.0
  * rack-test 0.6.1
  * fpm (see notes below)
 
