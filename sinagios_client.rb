@@ -11,7 +11,7 @@ require 'optparse'
 class SinagiosClient
   def initialize(argv)
     @operation = nil
-    @options = {:warnings => true}
+    @options = {:warnings => true, :use_auth => false}
     @option_parser = OptionParser.new do |opts|
       # Pull in config values from a config file
       parse_config_file()
@@ -89,7 +89,18 @@ class SinagiosClient
     @options[:hosts].each do |host|
       res = post_request(host, formdata)
 
-      if res.code != '201'
+      if res.code == '401'
+        if @options[:use_auth] == false
+          # Enable authentication and restart the block after checking we have credentials.
+          check_auth_creds()
+          @options[:use_auth] = true
+          redo
+        else
+          # authentication was used but the request failed anyway
+          $stderr.puts "#{res.code} - authentication failed with supplied credentials."
+          success = false
+        end
+      elsif res.code != '201'
         $stderr.puts "#{res.code} #{res.body} - downtime for #{host} may not have been scheduled."
         success = false
       else
@@ -117,6 +128,17 @@ class SinagiosClient
       if res.code == '404'
         $stderr.puts "#{res.code} - downtime for #{host} was not found."
         success = false
+      elsif res.code == '401'
+        if @options[:use_auth] == false
+          # Enable authentication and restart the block after checking we have credentials.
+          check_auth_creds()
+          @options[:use_auth] = true
+          redo
+        else
+          # authentication was used but the request failed anyway
+          $stderr.puts "#{res.code} - authentication failed with supplied credentials."
+          success = false
+        end
       elsif res.code != '200'
         $stderr.puts "#{res.code} #{res.body} - downtime for #{host} may not have been deleted."
         success = false
@@ -131,16 +153,32 @@ class SinagiosClient
   end
 
   private
+  # Check that we have a username and password for Basic Auth
+  def check_auth_creds()
+    if ! (@options.has_key?(:author) and @options.has_key?(:password))
+      $stderr.puts "Both author (username) and password are required, since authentication was requested."
+      finish_connection()
+      exit(1)
+    end
+  end
+
   # Do an HTTP POST
   def post_request(host, formdata)
     req = Net::HTTP::Post.new(request_path(host))
+    if @options[:use_auth]
+      req.basic_auth(@options[:author], @options[:password])
+    end
     req.set_form_data(formdata)
     return @http.request(req)
   end
 
   # Do an HTTP DELETE
   def delete_request(host)
-    @http.delete(request_path(host))
+    req = Net::HTTP::Delete.new(request_path(host))
+    if @options[:use_auth]
+      req.basic_auth(@options[:author], @options[:password])
+    end
+    return @http.request(req)
   end
 
   # Assemble the path for the request based on the host
