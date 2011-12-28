@@ -90,27 +90,18 @@ desc "Package required Gems as RPM using fpm"
 task :package_gems do
   require 'fpm' # just to make sure we have it before proceeding
 
-  # list our required gems and versions
-  gemlist = { 'rake'      => '0.8.7',
-              'rack'      => '1.2.4',
-              'thin'      => '1.2.11',
-              'sinatra'   => '1.2.7',
-              'rack-test' => '0.6.1',
-              'json'      => '1.5.3',
-              'rspec'     => '2.6.0',
-              'rcov'      => '0.9.11',
-              # subcomponents/dependencies:
-              'rspec-core'         => '2.6.4',
-              'rspec-expectations' => '2.6.0',
-              'rspec-mocks'        => '2.6.0',
-              'rack-protection'    => '1.1.4',
-              'tilt'               => '1.3.3',
-              'eventmachine'       => '0.12.10',
-              'daemons'            => '1.1.4',
-              'diff-lcs'           => '1.1.2'
-            }
+  # Couple of convenience functions to reuse Gemfile information
+  def source(name); end
 
-  gemlist.each_pair do |gemname, gemversion|
-    sh "fpm -s gem -t rpm #{gemname} -v #{gemversion}"
+  @gemlist = {}
+  def gem(name, version)
+    @gemlist[name] = version
+  end
+
+  # load list of gems from the Bundler Gemfile
+  Kernel.load(File.join(File.dirname(__FILE__), 'Gemfile'))
+
+  @gemlist.each_pair do |name, version|
+    sh "fpm -s gem -t rpm #{name} -v #{version}"
   end
 end

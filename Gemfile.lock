@@ -4,6 +4,8 @@ GEM
     daemons (1.1.4)
     diff-lcs (1.1.2)
     eventmachine (0.12.10)
+    fpm (0.3.11)
+      json
     json (1.5.3)
     rack (1.2.4)
     rack-protection (1.1.4)
@@ -36,6 +38,7 @@ DEPENDENCIES
   daemons (= 1.1.4)
   diff-lcs (= 1.1.2)
   eventmachine (= 0.12.10)
+  fpm (= 0.3.11)
   json (= 1.5.3)
   rack (= 1.2.4)
   rack-protection (= 1.1.4)
