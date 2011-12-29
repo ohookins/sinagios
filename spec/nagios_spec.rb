@@ -1,4 +1,6 @@
 require 'rspec'
+require 'spec_helper'
+require 'mocha'
 require 'tempfile'
 require 'fileutils'
 require 'nagios'
@@ -80,8 +82,8 @@ describe Nagios do
       nagios = Nagios.new(@cmd_file, @status_file)
 
       # Set up mocks to catch the commands that will be sent
-      nagios.should_receive(:send_command).with('DEL_HOST_DOWNTIME;1')
-      nagios.should_receive(:send_command).with('DEL_SVC_DOWNTIME;2')
+      nagios.expects(:send_command).with('DEL_HOST_DOWNTIME;1')
+      nagios.expects(:send_command).with('DEL_SVC_DOWNTIME;2')
 
       nagios.delete_all_downtime_for_host('example1')
     end
@@ -92,8 +94,8 @@ describe Nagios do
       nagios = Nagios.new(@cmd_file, @status_file)
 
       # Mock out time and send_command
-      nagios.should_receive(:get_seconds_since_epoch).and_return(1234567890)
-      nagios.should_receive(:send_command).with('SCHEDULE_HOST_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
+      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
+      nagios.expects(:send_command).with('SCHEDULE_HOST_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
 
       nagios.schedule_host_downtime('localhost', '9', 'Test Dude', 'Test Downtime')
     end
@@ -104,8 +106,8 @@ describe Nagios do
       nagios = Nagios.new(@cmd_file, @status_file)
 
       # Mock out time and send_command
-      nagios.should_receive(:get_seconds_since_epoch).and_return(1234567890)
-      nagios.should_receive(:send_command).with('SCHEDULE_HOST_SVC_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
+      nagios.expects(:get_seconds_since_epoch).returns(1234567890)
+      nagios.expects(:send_command).with('SCHEDULE_HOST_SVC_DOWNTIME;localhost;1234567890;1234567899;1;0;0;Test Dude;Test Downtime')
 
       nagios.schedule_services_downtime('localhost', '9', 'Test Dude', 'Test Downtime')
     end
@@ -126,7 +128,7 @@ describe Nagios do
       mocktime = 1234567890
 
       # Mock the call to get the current time so we have predictable output
-      nagios.should_receive(:get_seconds_since_epoch).and_return(mocktime)
+      nagios.expects(:get_seconds_since_epoch).returns(mocktime)
       nagios.send(:send_command, mockcommand)
 
       # Verify the output written to the command file

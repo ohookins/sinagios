@@ -1,5 +1,6 @@
 require 'sinagios_client'
 require 'rspec'
+require 'spec_helper'
 require 'stringio'
 
 describe SinagiosClient do
@@ -60,7 +61,7 @@ describe SinagiosClient do
   describe '#parse_config_file' do
     it 'sets options based on the config file if it exists' do
       fakeconfig = File.join(File.dirname(__FILE__), 'test_data/fakeconfig.conf')
-      SinagiosClient.any_instance.should_receive(:config_file_path).twice.and_return(fakeconfig)
+      SinagiosClient.any_instance.expects(:config_file_path).twice.returns(fakeconfig)
       expect do
         sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1'])
         sc.instance_eval do
@@ -70,6 +71,24 @@ describe SinagiosClient do
           @options[:warnings].should == false
         end
       end.to_not raise_error
+    end
+  end
+
+  describe '#finish_connection' do
+    it 'closes the http connection if it is open' do
+      sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/'])
+
+      # mock out the connection
+      http = mock("Net::HTTP")
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # inject the mock
+      sc.instance_eval do
+	@http = http
+      end
+
+      sc.send(:finish_connection)
     end
   end
 end

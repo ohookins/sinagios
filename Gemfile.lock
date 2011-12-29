@@ -7,6 +7,9 @@ GEM
     fpm (0.3.11)
       json
     json (1.5.3)
+    metaclass (0.0.1)
+    mocha (0.10.0)
+      metaclass (~> 0.0.1)
     rack (1.2.4)
     rack-protection (1.1.4)
       rack
@@ -40,6 +43,7 @@ DEPENDENCIES
   eventmachine (= 0.12.10)
   fpm (= 0.3.11)
   json (= 1.5.3)
+  mocha (= 0.10.0)
   rack (= 1.2.4)
   rack-protection (= 1.1.4)
   rack-test (= 0.6.1)
