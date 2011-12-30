@@ -19,7 +19,13 @@ class SinagiosClient
       # Parse options from command line, which can override options from file
       opts.banner = "Usage: #{$0} -u <URI> -a <author> [-p <password>] -o <operation> -h <hosts> [-d <duration> -c <comment>]"
       opts.on('-u <uri>', '--uri', 'The URI of the Sinagios API') do |u|
-        @options[:uri] = u
+	# Parse the URI immediately.
+	begin
+	  @uri = URI.parse(u)
+	rescue URI::InvalidURIError => detail
+	  $stderr.puts detail.message
+	  exit(1)
+	end
       end
       opts.on('-a <author>', '--author', 'Author field when scheduling downtime. Also used for HTTP Basic Authentication if applicable') do |a|
         @options[:author] = a
@@ -162,12 +168,17 @@ class SinagiosClient
     end
   end
 
+  # Set authentication on a request
+  def set_request_auth(request)
+    if @options[:use_auth]
+      request.basic_auth(@options[:author], @options[:password])
+    end
+  end
+
   # Do an HTTP POST
   def post_request(host, formdata)
     req = Net::HTTP::Post.new(request_path(host))
-    if @options[:use_auth]
-      req.basic_auth(@options[:author], @options[:password])
-    end
+    set_request_auth(req)
     req.set_form_data(formdata)
     return @http.request(req)
   end
@@ -175,9 +186,7 @@ class SinagiosClient
   # Do an HTTP DELETE
   def delete_request(host)
     req = Net::HTTP::Delete.new(request_path(host))
-    if @options[:use_auth]
-      req.basic_auth(@options[:author], @options[:password])
-    end
+    set_request_auth(req)
     return @http.request(req)
   end
 
@@ -193,13 +202,6 @@ class SinagiosClient
     if ! sufficient
       $stderr.puts "Minimum required arguments: #{options.collect { |o| '--' + o.to_s }.join(', ')}\n\n"
       usage()
-    end
-
-    begin
-      @uri = URI.parse(@options[:uri])
-    rescue URI::InvalidURIError => detail
-      $stderr.puts detail.message
-      exit(1)
     end
   end
 
@@ -217,7 +219,19 @@ class SinagiosClient
 
     # Load defaults from config file
     if config
-      @options[:uri] = config['uri'] || nil
+      # Parse the URI into a usable object immediately.
+      if config.has_key?('uri')
+	begin
+	  @uri = URI.parse(config['uri'])
+	rescue URI::InvalidURIError => detail
+	  $stderr.puts detail.message
+	  exit(1)
+	end
+      else
+	@uri = nil
+      end
+
+      # Other settings are just strings
       @options[:author] = config['author'] || nil
       @options[:password] = config['password'] || nil
 
@@ -239,7 +253,6 @@ class SinagiosClient
 
   # Set up the HTTP(S) connection
   def set_up_connection()
-    @uri = URI.parse(@options[:uri])
     @http = Net::HTTP.new(@uri.host, @uri.port)
     if @uri.scheme == 'https'
       @http.use_ssl = true
