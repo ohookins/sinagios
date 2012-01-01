@@ -19,13 +19,7 @@ class SinagiosClient
       # Parse options from command line, which can override options from file
       opts.banner = "Usage: #{$0} -u <URI> -a <author> [-p <password>] -o <operation> -h <hosts> [-d <duration> -c <comment>]"
       opts.on('-u <uri>', '--uri', 'The URI of the Sinagios API') do |u|
-	# Parse the URI immediately.
-	begin
-	  @uri = URI.parse(u)
-	rescue URI::InvalidURIError => detail
-	  $stderr.puts detail.message
-	  exit(1)
-	end
+	@uri = parse_uri(u)
       end
       opts.on('-a <author>', '--author', 'Author field when scheduling downtime. Also used for HTTP Basic Authentication if applicable') do |a|
         @options[:author] = a
@@ -63,6 +57,17 @@ class SinagiosClient
     if ! @operation
       $stderr.puts "Minimum required arguments: --operation, --uri, --hosts\n\n"
       usage()
+    end
+  end
+
+  # Just a simple wrapper around the URI parsing
+  def parse_uri(uri)
+    # Parse the URI immediately.
+    begin
+      return URI.parse(uri)
+    rescue URI::InvalidURIError => detail
+      $stderr.puts detail.message
+      exit(1)
     end
   end
 
@@ -221,12 +226,7 @@ class SinagiosClient
     if config
       # Parse the URI into a usable object immediately.
       if config.has_key?('uri')
-	begin
-	  @uri = URI.parse(config['uri'])
-	rescue URI::InvalidURIError => detail
-	  $stderr.puts detail.message
-	  exit(1)
-	end
+	@uri = parse_uri(config['uri'])
       else
 	@uri = nil
       end

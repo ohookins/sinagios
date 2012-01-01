@@ -37,7 +37,6 @@ describe SinagiosClient do
       expect { SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'foo bar baz']) }.to raise_error(SystemExit)
       $stderr.string.should =~ /bad URI/
     end
-
   end
 
   describe '#check_valid_options' do
@@ -45,6 +44,21 @@ describe SinagiosClient do
       sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/'])
       expect { sc.send(:check_valid_options, [:foo, :bar]) }.to raise_error(SystemExit)
       $stderr.string.should =~ /Minimum required arguments.*--foo.*--bar/
+    end
+  end
+
+  describe '#parse_uri' do
+    it 'catches poorly formed URIs' do
+      expect { SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'foo bar baz']) }.to raise_error(SystemExit)
+      $stderr.string.should =~ /bad URI/
+    end
+
+    it 'accepts correctly formed URIs' do
+      sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/'])
+
+      sc.instance_eval do
+	@uri.class.should == URI::HTTP
+      end
     end
   end
 
@@ -79,11 +93,153 @@ describe SinagiosClient do
   end
 
   describe '#delete' do
-    pending
+    before(:each) do
+      # mock out the starting checks and connection setup as we need to intercept the request
+      @sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/'])
+      @sc.expects(:check_valid_options)
+      @sc.expects(:set_up_connection)
+
+      # save outputs for checking
+      $stdout, $stderr = StringIO.new(), StringIO.new()
+    end
+
+    after(:each) do
+      # Reset outputs to normal
+      $stdout, $stderr = STDOUT, STDERR
+    end
+
+    it 'returns successfully when downtime has been deleted' do
+      # mock HTTP request with a 200 result
+      http = mock('Net::HTTP')
+      result = mock('Net::HTTP result')
+      result.expects(:code).at_least_once.returns('200')
+      http.expects(:request).returns(result)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+      @sc.instance_eval do
+	@http = http
+      end
+
+      # Call the delete and check for correct output
+      @sc.send(:delete)
+      $stdout.string.should =~ /Downtime deleted for host1/
+    end
+
+    it 'makes a second request with authentication when a 401 is received' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with 401 and 200 codes
+      result401 = mock('Net::HTTP result 401')
+      result401.expects(:code).at_least_once.returns('401')
+      result200 = mock('Net::HTTP result 200')
+      result200.expects(:code).at_least_once.returns('200')
+
+      # Subsequent requests occur in order
+      http.expects(:request).at_least_once.returns(result401, result200)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object and set auth details
+      @sc.instance_eval do
+	@http = http
+	@options[:author] = 'testdude'
+	@options[:password] = 'testpass'
+      end
+
+      # Call the delete and check for correct output
+      @sc.send(:delete)
+      $stdout.string.should =~ /Downtime deleted for host1/
+    end
+
+    it 'fails when an authenticated request is sent to the server but fails' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with just authentication failed code
+      result401 = mock('Net::HTTP result 401')
+      result401.expects(:code).at_least_once.returns('401')
+
+      # Subsequent requests occur in order
+      http.expects(:request).at_least_once.returns(result401)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object and set auth details
+      @sc.instance_eval do
+	@http = http
+	@options[:author] = 'testdude'
+	@options[:password] = 'testpass'
+      end
+
+      # Call the delete and check for error output
+      @sc.send(:delete)
+      $stderr.string.should =~ /401 - authentication failed/
+    end
+
+    it 'fails when downtime was not found by the server' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with not found code
+      result404 = mock('Net::HTTP result 404')
+      result404.expects(:code).at_least_once.returns('404')
+
+      # Subsequent requests occur in order
+      http.expects(:request).at_least_once.returns(result404)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object
+      @sc.instance_eval do
+	@http = http
+      end
+
+      # Call the delete and check for error output
+      @sc.send(:delete)
+      $stderr.string.should =~ /404 - downtime for host1 was not found/
+    end
+
+    it 'makes a request to the server for each host in a list of hosts' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with success. We expect 3 calls per host (9 total).
+      result200 = mock('Net::HTTP result 200')
+      result200.expects(:code).times(9).returns('200')
+
+      # Subsequent requests occur in order
+      http.expects(:request).at_least_once.returns(result200)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object, and add three hosts to be processed
+      @sc.instance_eval do
+	@http = http
+	@options[:hosts] = ['host1', 'host2', 'host3']
+      end
+
+      # Call the delete and check for error output
+      @sc.send(:delete)
+      $stdout.string.should == "Downtime deleted for host1\nDowntime deleted for host2\nDowntime deleted for host3\n"
+    end
   end
 
   describe '#check_auth_creds' do
-    pending
+    it 'exits with an error when insufficient credentials are given' do
+      sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/'])
+      sc.expects(:finish_connection)
+
+      expect do
+        sc.send(:check_auth_creds)
+      end.to raise_error(SystemExit)
+      $stderr.string.should =~ /authentication was requested/
+    end
+
+    it 'passes when sufficient credentials are given' do
+      sc = SinagiosClient.new(['--operation', 'delete', '--hosts', 'host1', '--uri', 'http://api.example.com/', '--author', 'testdude', '--password', 'testpass'])
+      sc.send(:check_auth_creds)
+    end
   end
 
   describe '#set_request_auth' do
