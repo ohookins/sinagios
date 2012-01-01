@@ -89,7 +89,109 @@ describe SinagiosClient do
   end
 
   describe '#schedule' do
-    pending
+    before(:each) do
+      # mock out the starting checks and connection setup as we need to intercept the request
+      @sc = SinagiosClient.new(['--operation', 'schedule', '--hosts', 'host1', '--comment', 'test comment', '--duration', '300', '--uri', 'http://api.example.com/', '--author', 'testdude', '--password', 'testpass'])
+      @sc.expects(:check_valid_options)
+      @sc.expects(:set_up_connection)
+
+      # save outputs for checking
+      $stdout, $stderr = StringIO.new(), StringIO.new()
+    end
+
+    after(:each) do
+      # Reset outputs to normal
+      $stdout, $stderr = STDOUT, STDERR
+    end
+
+    it 'correctly schedules downtime for a single host' do
+      # mock HTTP request with a 201 result
+      http = mock('Net::HTTP')
+      result = mock('Net::HTTP result')
+      result.expects(:code).at_least_once.returns('201')
+      http.expects(:request).returns(result)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+      @sc.instance_eval do
+	@http = http
+      end
+
+      # Call schedule and check for correct output
+      @sc.send(:schedule)
+      $stdout.string.should =~ /Downtime scheduled for host1/
+    end
+
+    it 'correctly schedules downtime for several hosts' do
+      # mock HTTP request with a 201 result
+      http = mock('Net::HTTP')
+      result = mock('Net::HTTP result')
+      result.expects(:code).at_least_once.returns('201')
+      http.expects(:request).at_least_once.returns(result)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object and add more hosts to be scheduled
+      @sc.instance_eval do
+	@http = http
+	@options[:hosts] = ['host1', 'host2', 'host3']
+      end
+
+      # Call schedule and check for correct output
+      @sc.send(:schedule)
+      $stdout.string.should == "Downtime scheduled for host1\nDowntime scheduled for host2\nDowntime scheduled for host3\n"
+    end
+
+    it 'retries the request when authentication is required' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with 401 and 201 codes
+      result401 = mock('Net::HTTP result 401')
+      result401.expects(:code).at_least_once.returns('401')
+      result201 = mock('Net::HTTP result 201')
+      result201.expects(:code).at_least_once.returns('201')
+
+      # Subsequent requests occur in order
+      http.expects(:request).at_least_once.returns(result401, result201)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object and set auth details
+      @sc.instance_eval do
+	@http = http
+	@options[:author] = 'testdude'
+	@options[:password] = 'testpass'
+      end
+
+      # Call schedule and check for correct output
+      @sc.send(:schedule)
+      $stdout.string.should =~ /Downtime scheduled for host1/
+    end
+
+    it 'fails when authentication to the API fails' do
+      # mock HTTP requests
+      http = mock('Net::HTTP')
+
+      # http request results with just authentication failed code
+      result401 = mock('Net::HTTP result 401')
+      result401.expects(:code).at_least_once.returns('401')
+
+      # Subsequent requests are just repeats of the same 401
+      http.expects(:request).at_least_once.returns(result401)
+      http.expects(:started?).returns(true)
+      http.expects(:finish)
+
+      # Set up the mock http object and set auth details
+      @sc.instance_eval do
+	@http = http
+	@options[:author] = 'testdude'
+	@options[:password] = 'testpass'
+      end
+
+      # Call the delete and check for error output
+      @sc.send(:schedule)
+      $stderr.string.should =~ /401 - authentication failed/
+    end
   end
 
   describe '#delete' do
