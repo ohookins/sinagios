@@ -1,4 +1,4 @@
-if [ $1 -eq 1 ]; then
+if [ $1 -eq 0 ]; then
   # Tear down service and init script if we're not upgrading
   /sbin/service sinagios stop
   /sbin/chkconfig --del sinagios
